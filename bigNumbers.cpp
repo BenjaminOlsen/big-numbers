@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <math.h>
 #include <stdlib.h>
@@ -66,11 +67,13 @@ class Number
         }
 
         // ---------------------------------------------------------------------------------
-        bool operator==(const Number& other) const
+        bool operator==(Number& other) 
         {
+            redistribute();
+            other.redistribute();
             if (digits.size() != other.digits.size())
             {
-
+                return false;
             }
             for (int idx = 0; idx < digits.size(); ++idx)
             {
@@ -103,7 +106,8 @@ class Number
             }
             return ret;
         }
-      
+     
+        // SLOW: 
         // ---------------------------------------------------------------------------------
         Number& exponential(int p, bool print = false)
         {
@@ -124,6 +128,29 @@ class Number
                 }
             }
             *this = m;
+            return *this;
+        }
+
+        // does same as above, but converts to int first for speed
+        // ---------------------------------------------------------------------------------
+        Number& exponentialInt(int p, bool print = false)
+        {
+            int tot = p;
+            float pct = 0;
+            int cnt = 0;
+            int N = toInt();
+            while(--p > 0)
+            {
+                ++cnt;
+                *this *= N;
+                
+                if (print)
+                {
+                    pct = 100 * float(tot-p)/tot; 
+                    printf("cnt: %d, len: %zu, %0.2f%%\n", cnt, size(), pct);
+                    //std::cout << "\r" << p;
+                }
+            }
             return *this;
         }
 
@@ -152,7 +179,7 @@ class Number
                     digits[k] += other.digits[k];
                 }
             }
-            normalize();
+            redistribute();
             return *this;
         }
 
@@ -168,7 +195,7 @@ class Number
         Number& operator*=(const Number &other)
         {
             std::vector<int> c( size() + other.size(), 0 );
-            
+           
             for (int k = 0; k < c.size(); ++k)
             {
                 for (int j = 0; j <= k; ++j)
@@ -179,21 +206,30 @@ class Number
                     }
                 }
 
-                //printf("c[%d] = %d\n", k, c[k]);
             }
            
              
             digits = c;
-            normalize();
+            redistribute();
 
             return *this;
         }
 
         // ---------------------------------------------------------------------------------
-        Number& operator*=(int other);
+        Number& operator*=(int other)
+        {
+            for (int k = 0; k < size(); ++k)
+            {
+                digits[k] *= other;
+            }
+            redistribute();
+            return *this;
+        }
 
+        // ---------------------------------------------------------------------------------
         size_t size() const { return digits.size(); }
 
+        // ---------------------------------------------------------------------------------
         long sum() const
         {
             long s = 0;
@@ -207,7 +243,7 @@ class Number
     private:
         //carries over any dangling digits
         //and removes and leading zeros
-        void normalize()
+        void redistribute()
         {
             for (int idx = 0; idx < digits.size(); ++idx)
             {
@@ -239,15 +275,13 @@ class Number
 // ---------------------------------------------------------------------------------
 int main()
 {
-    Number n("999999999");
-    Number k(999999999);
-    n *= k;
-    n.print();
-    n.printStr(); 
-
+    std::cout << "enter power of 2 to calculate: ";
+    int power = 0;
+    std::cin >> power;
+    
     Number l(2);
     auto t1 = std::chrono::high_resolution_clock::now();
-    l.exponential(90000, true);
+    l.exponentialInt(power, true);
     auto t2 = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
     l.printStr();
@@ -256,6 +290,22 @@ int main()
     std::cout << "len: " << l.size() << "; sum: " << sum  << std::endl;
     
     std::cout << "time : " << duration/1000.0 << "ms = " << (duration/1000000.0)/60 << " minutes" << std::endl; 
+   
+    std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
     
+
+    /*std::ofstream file;
+    file.open("powersOfTwo.txt");
+
+    for (int p = 1; p < 30000; ++p)
+    {
+        std::cout << "calculating 2^" << p << std::endl;
+        Number n(2);
+        n.exponentialInt(p);
+        file << "~~~~~~~~~~~~~~~~~~~~~~~~~\n";
+        file << "2^" << p << ":\n";
+        file << n.toString() << "\n";
+    }*/
+
     return 0;
 }
