@@ -203,9 +203,6 @@ class Number
         // ---------------------------------------------------------------------------------
         Number& exponentialIntFast(long p, bool print = false)
         {
-            long tot = p;
-            float pct = 0;
-            long cnt = 0;
             long N = toLong();
 
             //use the fact that if p = m*n N^p = (N^m)^n,
@@ -238,6 +235,10 @@ class Number
             //recall N^p = (N^m)^n
             long n = p / m;
             *this = fromLong(NtoTheM);
+            
+            long tot = n;
+            float pct = 0;
+            long cnt = 0;
             while(--n > 0)
             {
                 ++cnt;
@@ -245,7 +246,7 @@ class Number
                 
                 if (print)
                 {
-                    pct = 100 * float(tot-p)/tot; 
+                    pct = 100 * float(tot-n)/tot; 
                     printf("cnt: %ld, len: %zu, %0.2f%%\n", cnt, size(), pct);
                     //std::cout << "\r" << p;
                 }
@@ -389,43 +390,27 @@ int main()
     
     Number l(base);
     auto t1 = std::chrono::high_resolution_clock::now();
-    l.exponentialInt(power);
+    l.exponentialIntFast(power, true);
     auto t2 = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-    l.printStr();
 
     long sum = l.sum();
     std::cout << "len: " << l.size() << "; sum: " << sum  << std::endl;
     std::cout << "time : " << duration/1000.0 << "ms = " << (duration/1000000.0)/60 << " minutes" << std::endl; 
     std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
     
-    l = Number(base);
-    t1 = std::chrono::high_resolution_clock::now();
-    l.exponentialIntFast(power);
-    t2 = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-    l.printStr();
-
-    sum = l.sum();
-    std::cout << "len: " << l.size() << "; sum: " << sum  << std::endl;
-    std::cout << "time : " << duration/1000.0 << "ms = " << (duration/1000000.0)/60 << " minutes" << std::endl; 
-    std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
-   
      
-    /*
     std::ofstream file;
-    file.open("powersOfTwo.txt");
+    char filename[512];
+    sprintf(filename, "pow_%ld_to_the_%ld.txt", base, power);
+    file.open(filename);
 
-    for (int p = 1; p < 30000; ++p)
-    {
-        std::cout << "calculating 2^" << p << std::endl;
-        Number n(2);
-        n.exponentialInt(p);
-        file << "~~~~~~~~~~~~~~~~~~~~~~~~~\n";
-        file << "2^" << p << ":\n";
-        file << n.toString() << "\n";
-    }
-    */
+    std::cout << "writing to " << filename << "...";
+    file << "len: " << l.size() << "; sum: " << sum  << "\n";
+    file << "time : " << duration/1000.0 << "ms = " << (duration/1000000.0)/60 << " minutes" << "\n";
+    file << "~~~~~~~~~~~~~~~~~~~~~~~~~" << "\n";
+    file << l.toString() << "\n";
+    std::cout << "done" << std::endl;
 
     return 0;
 }
