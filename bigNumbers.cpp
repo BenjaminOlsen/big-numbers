@@ -37,16 +37,16 @@ class Number
         }
 
         // ---------------------------------------------------------------------------------
-        Number(int n)
+        Number(long n)
         {
-            const int N = n;
+            const long N = n;
             int mod = 10;
             while (n >= 1)
             {   
                 int thisDigit = n % 10;
                 digits.push_back(thisDigit);
                 n /= 10;
-                std::cout << "thisDigit: " << thisDigit << ", n: " << n << std::endl;
+                //std::cout << "thisDigit: " << thisDigit << ", n: " << n << std::endl;
             }
             
         };
@@ -97,7 +97,7 @@ class Number
         }
 
         // ---------------------------------------------------------------------------------
-        int toInt() 
+        long toLong() 
         {
             int ret = 0;
             for (int p = 0; p < digits.size(); ++p)
@@ -109,11 +109,11 @@ class Number
      
         // SLOW: 
         // ---------------------------------------------------------------------------------
-        Number& exponential(int p, bool print = false)
+        Number& exponential(long p, bool print = false)
         {
-            int tot = p;
+            long tot = p;
             float pct = 0;
-            int cnt = 0;
+            long cnt = 0;
             Number m(*this);
             while(--p > 0)
             {
@@ -123,7 +123,7 @@ class Number
                 if (print)
                 {
                     pct = 100 * float(tot-p)/tot; 
-                    printf("cnt: %d, len: %zu, %0.2f%%\n", cnt, m.size(), pct);
+                    printf("cnt: %ld, len: %zu, %0.2f%%\n", cnt, m.size(), pct);
                     //std::cout << "\r" << p;
                 }
             }
@@ -133,12 +133,12 @@ class Number
 
         // does same as above, but converts to int first for speed
         // ---------------------------------------------------------------------------------
-        Number& exponentialInt(int p, bool print = false)
+        Number& exponentialInt(long p, bool print = false)
         {
-            int tot = p;
+            long tot = p;
             float pct = 0;
-            int cnt = 0;
-            int N = toInt();
+            long cnt = 0;
+            long N = toLong();
             while(--p > 0)
             {
                 ++cnt;
@@ -147,7 +147,7 @@ class Number
                 if (print)
                 {
                     pct = 100 * float(tot-p)/tot; 
-                    printf("cnt: %d, len: %zu, %0.2f%%\n", cnt, size(), pct);
+                    printf("cnt: %ld, len: %zu, %0.2f%%\n", cnt, size(), pct);
                     //std::cout << "\r" << p;
                 }
             }
@@ -275,11 +275,20 @@ class Number
 // ---------------------------------------------------------------------------------
 int main()
 {
-    std::cout << "enter power of 2 to calculate: ";
-    int power = 0;
+
+    std::cout << "welcome to big number generator\n";
+    std::cout << "here, LONG_MAX is: " << LONG_MAX << std::endl;
+    char buf[128];
+    sprintf(buf, "%ld", long(sqrt(LONG_MAX)));
+    std::cout << "-> sqrt(LONG_MAX): " << buf << std::endl;
+    std::cout << "enter base smaller than that:";
+    long base = 2;
+    std::cin >> base;
+    std::cout << "enter exponent K to calculate " << base << " to the power of K: ";
+    long power = 0;
     std::cin >> power;
     
-    Number l(2);
+    Number l(base);
     auto t1 = std::chrono::high_resolution_clock::now();
     l.exponentialInt(power, true);
     auto t2 = std::chrono::high_resolution_clock::now();
@@ -288,13 +297,12 @@ int main()
 
     long sum = l.sum();
     std::cout << "len: " << l.size() << "; sum: " << sum  << std::endl;
-    
     std::cout << "time : " << duration/1000.0 << "ms = " << (duration/1000000.0)/60 << " minutes" << std::endl; 
-   
     std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
     
-
-    /*std::ofstream file;
+    
+    /*
+    std::ofstream file;
     file.open("powersOfTwo.txt");
 
     for (int p = 1; p < 30000; ++p)
@@ -305,7 +313,8 @@ int main()
         file << "~~~~~~~~~~~~~~~~~~~~~~~~~\n";
         file << "2^" << p << ":\n";
         file << n.toString() << "\n";
-    }*/
+    }
+    */
 
     return 0;
 }
