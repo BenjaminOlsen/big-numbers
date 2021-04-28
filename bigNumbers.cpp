@@ -48,8 +48,45 @@ class Number
                 n /= 10;
                 //std::cout << "thisDigit: " << thisDigit << ", n: " << n << std::endl;
             }
-            
         };
+
+        // ---------------------------------------------------------------------------------
+        static std::vector<long> primeFactors(long n)
+        {
+            std::vector<long> factorVec;
+            
+            long z = 2;
+            while (z * z <= n)
+            {
+                printf("seeing if %ld divides %ld\n", z, n);
+                if (n % z == 0)
+                {
+                    factorVec.push_back(z);
+                    printf("%ld divides %ld\n", z, n);
+                    n /= z;
+                }
+                else
+                {
+                   ++z;
+                } 
+            }
+
+            if (n > 1)
+            {
+                printf("finally %ld\n", n);
+                factorVec.push_back(n);
+            }
+
+            for (auto k : factorVec)
+            {
+                std::cout << k << ", ";
+            }
+
+            std::cout << std::endl;
+
+            return factorVec;
+
+        }
 
         // ---------------------------------------------------------------------------------
         void print()
@@ -106,6 +143,13 @@ class Number
             }
             return ret;
         }
+
+        // ---------------------------------------------------------------------------------
+        Number& fromLong(long n)
+        {
+            *this = Number(n);
+            return *this;
+        }
      
         // SLOW: 
         // ---------------------------------------------------------------------------------
@@ -143,6 +187,61 @@ class Number
             {
                 ++cnt;
                 *this *= N;
+
+                if (print)
+                {
+                    pct = 100 * float(tot-p)/tot;
+                    printf("cnt: %ld, len: %zu, %0.2f%%\n", cnt, size(), pct);
+                    //std::cout << "\r" << p;
+                }
+            }
+            return *this;
+        }
+
+        // does same as above, but converts to long int first for speed, and tries to minimize
+        // the number of multiplications that it does
+        // ---------------------------------------------------------------------------------
+        Number& exponentialIntFast(long p, bool print = false)
+        {
+            long tot = p;
+            float pct = 0;
+            long cnt = 0;
+            long N = toLong();
+
+            //use the fact that if p = m*n N^p = (N^m)^n,
+            //you can do m times fewer multiplications
+            
+            long m = 1;
+            long NtoTheM = N;
+            //make sure that N*digits[k] does not overflow!
+            std::vector<long> factors = primeFactors(p);
+            if (!factors.empty())
+            {
+                //naive:
+                int idx = 0;
+                const int LIMIT = INT_MAX/10;
+
+                //guarantees that pow(NtoTheM, factors[idx]) < LIMIT
+                while ( factors[idx] < log(LIMIT)/log(NtoTheM) && idx < factors.size())
+                {
+                    m *= factors[idx];
+                    NtoTheM = pow(NtoTheM, factors[idx]);
+                    printf("factor: %ld; m: %ld; NtoTheM: %ld; log(%d)/log(NtoTheM): %0.3f\n", factors[idx], m, NtoTheM, LIMIT, log(LIMIT)/log(NtoTheM));
+                    ++idx;
+                }
+                
+                printf("omitting %ld: pow(%ld, %ld) = %0.2f\n", factors[idx], NtoTheM, factors[idx], pow(NtoTheM, factors[idx]));
+                printf("N: %ld; p: %ld --> m: %ld; NtoTheM: %ld\n",
+                        N, p, m, NtoTheM);
+            }
+
+            //recall N^p = (N^m)^n
+            long n = p / m;
+            *this = fromLong(NtoTheM);
+            while(--n > 0)
+            {
+                ++cnt;
+                *this *= NtoTheM; 
                 
                 if (print)
                 {
@@ -208,7 +307,6 @@ class Number
 
             }
            
-             
             digits = c;
             redistribute();
 
@@ -216,7 +314,8 @@ class Number
         }
 
         // ---------------------------------------------------------------------------------
-        Number& operator*=(int other)
+        template <typename T>
+        Number& operator*=(T other)
         {
             for (int k = 0; k < size(); ++k)
             {
@@ -290,7 +389,7 @@ int main()
     
     Number l(base);
     auto t1 = std::chrono::high_resolution_clock::now();
-    l.exponentialInt(power, true);
+    l.exponentialInt(power);
     auto t2 = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
     l.printStr();
@@ -300,7 +399,19 @@ int main()
     std::cout << "time : " << duration/1000.0 << "ms = " << (duration/1000000.0)/60 << " minutes" << std::endl; 
     std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
     
-    
+    l = Number(base);
+    t1 = std::chrono::high_resolution_clock::now();
+    l.exponentialIntFast(power);
+    t2 = std::chrono::high_resolution_clock::now();
+    duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+    l.printStr();
+
+    sum = l.sum();
+    std::cout << "len: " << l.size() << "; sum: " << sum  << std::endl;
+    std::cout << "time : " << duration/1000.0 << "ms = " << (duration/1000000.0)/60 << " minutes" << std::endl; 
+    std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+   
+     
     /*
     std::ofstream file;
     file.open("powersOfTwo.txt");
